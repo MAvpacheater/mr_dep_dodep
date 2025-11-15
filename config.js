@@ -106,7 +106,7 @@ const GEMINI_MODELS = [
     'gemini-exp-1206',
     'gemini-2.0-flash-thinking-exp-1219',
     'gemini-1.5-pro',
-    'gemini-1.5-flash'
+    'gemini-2.0-flash'
 ];
 
 // Повна характеристика для промпта
