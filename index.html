@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr Dep Dodep - Content Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">MD</div>
+                <div class="logo-text">
+                    <h1>Mr Dep Dodep</h1>
+                    <p>Content Generation Dashboard</p>
+                </div>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-page="chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Чат</span>
+                </button>
+                <button class="nav-btn" data-page="gallery">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Галерея</span>
+                </button>
+                <button class="nav-btn" data-page="docs">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <span>Документація</span>
+                </button>
+                <button class="nav-btn" data-page="settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m-6-6h6m6 0h-6"></path>
+                    </svg>
+                    <span>Налаштування</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Chat Page -->
+        <div id="chat-page" class="page active">
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="empty-state">
+                        <div class="empty-icon">💬</div>
+                        <h2>Привіт. Я Mr Dep Dodep.</h2>
+                        <p>Задай своє питання, і я допоможу згенерувати ідеї для контенту.</p>
+                    </div>
+                </div>
+                <div class="chat-input-wrapper">
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Напиши своє питання...">
+                    <button id="send-btn" class="send-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Page -->
+        <div id="gallery-page" class="page">
+            <div class="page-container">
+                <h2 class="page-title">Галерея Mr Dep</h2>
+                <div class="gallery-grid" id="gallery-grid">
+                    <div class="empty-state">
+                        <div class="empty-icon">🖼️</div>
+                        <p>Додайте зображення в папку images/ вашого репозиторію</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Docs Page -->
+        <div id="docs-page" class="page">
+            <div class="page-container">
+                <h2 class="page-title">Документація персонажа</h2>
+                <div class="docs-grid" id="docs-grid"></div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings-page" class="page">
+            <div class="page-container settings-container">
+                <h2 class="page-title">Налаштування</h2>
+                <div class="settings-card">
+                    <div class="setting-group">
+                        <label>API Key Gemini</label>
+                        <input type="password" id="api-key" placeholder="Введіть ваш API ключ">
+                        <small>Отримайте ключ на <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Модель</label>
+                        <select id="model-select"></select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Креативність (Temperature): <span id="temp-value">0.9</span></label>
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.9">
+                        <div class="range-labels">
+                            <span>Точність</span>
+                            <span>Креативність</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Максимум токенів: <span id="tokens-value">2048</span></label>
+                        <input type="range" id="max-tokens" min="256" max="8192" step="256" value="2048">
+                        <div class="range-labels">
+                            <span>256</span>
+                            <span>8192</span>
+                        </div>
+                    </div>
+                    
+                    <button id="clear-chat" class="btn-danger">Очистити історію чату</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <button class="modal-close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <img id="modal-image" src="" alt="">
+            <div class="modal-actions">
+                <button class="btn-secondary" id="modal-copy">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Копіювати шлях
+                </button>
+                <button class="btn-primary" id="modal-download">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Завантажити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
