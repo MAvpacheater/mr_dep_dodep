@@ -29,11 +29,9 @@ function initNavigation() {
         btn.addEventListener('click', () => {
             const pageName = btn.dataset.page;
             
-            // Оновлення активної кнопки
             navBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Показати відповідну сторінку
             pages.forEach(p => p.classList.remove('active'));
             document.getElementById(`${pageName}-page`).classList.add('active');
         });
@@ -61,16 +59,13 @@ async function sendMessage() {
     
     if (!message || !settings.apiKey) {
         if (!settings.apiKey) {
-            alert('Будь ласка, введіть API ключ у налаштуваннях');
+            showToast('Будь ласка, введіть API ключ у налаштуваннях', 'error');
         }
         return;
     }
     
-    // Додати повідомлення користувача
     addMessage('user', message);
     input.value = '';
-    
-    // Показати індикатор завантаження
     showLoading();
     
     try {
@@ -108,6 +103,7 @@ async function sendMessage() {
     } catch (error) {
         hideLoading();
         addMessage('assistant', `Помилка: ${error.message}`);
+        showToast('Помилка при отриманні відповіді', 'error');
     }
 }
 
@@ -131,22 +127,17 @@ function addMessage(role, content) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
         
-        actionsDiv.innerHTML = `
-            <button class="icon-btn" onclick="copyText(\`${content.replace(/`/g, '\\`')}\`)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
-            <button class="icon-btn" onclick="downloadText(\`${content.replace(/`/g, '\\`')}\`, 'mr-dep-message.txt')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-            </button>
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'icon-btn';
+        copyBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
         `;
+        copyBtn.onclick = () => copyToClipboard(content);
         
+        actionsDiv.appendChild(copyBtn);
         contentDiv.appendChild(actionsDiv);
     }
     
@@ -154,7 +145,6 @@ function addMessage(role, content) {
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     
-    // Зберегти історію
     chatMessages.push({ role, content });
     saveChatHistory();
 }
@@ -186,29 +176,72 @@ function hideLoading() {
     }
 }
 
-// Копіювання тексту
-function copyText(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showNotification('Скопійовано!');
-    });
+// Копіювання в буфер обміну (правильно)
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast('Скопійовано в буфер обміну', 'success');
+    } catch (err) {
+        // Fallback для старих браузерів
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('Скопійовано в буфер обміну', 'success');
+        } catch (err) {
+            showToast('Помилка копіювання', 'error');
+        }
+        document.body.removeChild(textArea);
+    }
 }
 
-// Завантаження тексту
-function downloadText(text, filename) {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-    showNotification('Завантажено!');
+// Завантаження зображення
+function downloadImage(imagePath) {
+    fetch(imagePath)
+        .then(response => response.blob())
+        .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = imagePath.split('/').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Зображення завантажено', 'success');
+        })
+        .catch(() => {
+            showToast('Помилка завантаження', 'error');
+        });
 }
 
-// Показати сповіщення
-function showNotification(message) {
-    // Можна додати toast-повідомлення
-    console.log(message);
+// Показати сповіщення (Toast)
+function showToast(message, type = 'success') {
+    // Видалити попередні toast, якщо є
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = type === 'success' ? '✓' : '✕';
+    toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideInUp 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
 }
 
 // Ініціалізація галереї
@@ -220,7 +253,7 @@ function initGallery() {
 async function loadImages() {
     const galleryGrid = document.getElementById('gallery-grid');
     
-    // Список зображень (додайте свої імена файлів)
+    // Список зображень (оновіть своїми іменами файлів)
     const imageList = [
         'dodep-coder.png',
         'dodep-ninja.png',
@@ -228,7 +261,6 @@ async function loadImages() {
         'dodeper1.png'
     ];
     
-    // Очистити порожній стан
     galleryGrid.innerHTML = '';
     
     if (imageList.length === 0) {
@@ -245,44 +277,78 @@ async function loadImages() {
         const imagePath = `images/${imageName}`;
         const item = document.createElement('div');
         item.className = 'gallery-item';
-        item.innerHTML = `
-            <div class="gallery-image-wrapper" onclick="openImageModal('${imagePath}')">
-                <img src="${imagePath}" alt="${imageName}" class="gallery-image">
-                <div class="gallery-overlay">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="gallery-actions">
-                <button class="btn-secondary" onclick="copyText('${imagePath}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    Копіювати
-                </button>
-                <button class="btn-primary" onclick="downloadImage('${imagePath}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Завантажити
-                </button>
-            </div>
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'gallery-image-wrapper';
+        wrapper.onclick = () => openImageModal(imagePath);
+        
+        const img = document.createElement('img');
+        img.src = imagePath;
+        img.alt = imageName;
+        img.className = 'gallery-image';
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'gallery-overlay';
+        overlay.innerHTML = `
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+            </svg>
         `;
+        
+        wrapper.appendChild(img);
+        wrapper.appendChild(overlay);
+        
+        const actions = document.createElement('div');
+        actions.className = 'gallery-actions';
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn-secondary';
+        copyBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Копіювати
+        `;
+        copyBtn.onclick = () => copyImageToClipboard(imagePath);
+        
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'btn-primary';
+        downloadBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Завантажити
+        `;
+        downloadBtn.onclick = () => downloadImage(imagePath);
+        
+        actions.appendChild(copyBtn);
+        actions.appendChild(downloadBtn);
+        
+        item.appendChild(wrapper);
+        item.appendChild(actions);
+        
         galleryGrid.appendChild(item);
     });
 }
 
-// Завантаження зображення
-function downloadImage(imagePath) {
-    const a = document.createElement('a');
-    a.href = imagePath;
-    a.download = imagePath.split('/').pop();
-    a.click();
-    showNotification('Завантажено!');
+// Копіювати зображення в буфер обміну
+async function copyImageToClipboard(imagePath) {
+    try {
+        const response = await fetch(imagePath);
+        const blob = await response.blob();
+        
+        await navigator.clipboard.write([
+            new ClipboardItem({ [blob.type]: blob })
+        ]);
+        
+        showToast('Зображення скопійовано', 'success');
+    } catch (err) {
+        // Fallback: копіювати шлях
+        await copyToClipboard(imagePath);
+    }
 }
 
 // Ініціалізація документації
@@ -313,27 +379,26 @@ function initDocs() {
         
         const fullText = `${section.title}\n\n${section.content || ''}\n${section.list ? section.list.join('\n') : ''}\n${section.footer || ''}`;
         
-        html += `
-            <div class="doc-actions">
-                <button class="btn-secondary" onclick="copyText(\`${fullText.replace(/`/g, '\\`')}\`)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    Копіювати
-                </button>
-                <button class="btn-primary" onclick="downloadText(\`${fullText.replace(/`/g, '\\`')}\`, 'mr-dep-${section.title.replace(/\s+/g, '-')}.txt')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Завантажити
-                </button>
-            </div>
+        html += `<div class="doc-actions">`;
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn-primary';
+        copyBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Копіювати
         `;
         
+        html += `</div>`;
         card.innerHTML = html;
+        
+        const actionsDiv = card.querySelector('.doc-actions');
+        actionsDiv.appendChild(copyBtn);
+        
+        copyBtn.onclick = () => copyToClipboard(fullText);
+        
         docsGrid.appendChild(card);
     });
 }
@@ -348,7 +413,6 @@ function initSettings() {
     const apiKeyInput = document.getElementById('api-key');
     const clearChatBtn = document.getElementById('clear-chat');
     
-    // Заповнити список моделей
     window.GEMINI_MODELS.forEach(model => {
         const option = document.createElement('option');
         option.value = model;
@@ -356,7 +420,6 @@ function initSettings() {
         modelSelect.appendChild(option);
     });
     
-    // Обробники подій
     apiKeyInput.addEventListener('change', () => {
         settings.apiKey = apiKeyInput.value;
         saveSettings();
@@ -390,7 +453,7 @@ function initSettings() {
                     <p>Задай своє питання, і я допоможу згенерувати ідеї для контенту.</p>
                 </div>
             `;
-            showNotification('Історію чату очищено');
+            showToast('Історію чату очищено', 'success');
         }
     });
 }
@@ -454,22 +517,17 @@ function addMessageToDOM(role, content) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
         
-        actionsDiv.innerHTML = `
-            <button class="icon-btn" onclick="copyText(\`${content.replace(/`/g, '\\`')}\`)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
-            <button class="icon-btn" onclick="downloadText(\`${content.replace(/`/g, '\\`')}\`, 'mr-dep-message.txt')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-            </button>
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'icon-btn';
+        copyBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
         `;
+        copyBtn.onclick = () => copyToClipboard(content);
         
+        actionsDiv.appendChild(copyBtn);
         contentDiv.appendChild(actionsDiv);
     }
     
@@ -490,7 +548,7 @@ function initModal() {
     
     copyBtn.addEventListener('click', () => {
         if (currentImage) {
-            copyText(currentImage);
+            copyImageToClipboard(currentImage);
         }
     });
     
