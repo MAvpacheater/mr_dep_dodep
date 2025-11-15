@@ -222,10 +222,10 @@ async function loadImages() {
     
     // Список зображень (додайте свої імена файлів)
     const imageList = [
-        'mr-dep-1.jpg',
-        'mr-dep-2.jpg',
-        'mr-dep-3.jpg',
-        'mr-dep-4.jpg'
+        'dodep-coder.png',
+        'dodep-ninja.png',
+        'dodeper.png',
+        'dodeper1.png'
     ];
     
     // Очистити порожній стан
